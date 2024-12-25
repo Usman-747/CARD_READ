@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block title %}Scan QR Code{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Scan QR Code</h1>
+    <form action="/scan_qr" method="POST">
+        <div class="form-group">
+            <label for="qr_data">QR Code Data</label>
+            <textarea id="qr_data" name="qr_data" class="form-control" rows="4" required></textarea>
+            <small class="form-text text-muted">Paste the scanned QR code data here.</small>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Mark Attendance</button>
+    </form>
+</div>
+{% endblock %}

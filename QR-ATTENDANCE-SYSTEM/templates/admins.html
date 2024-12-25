@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Admin Dashboard</h1>
+    <div class="row">
+        <!-- Generate QR Code -->
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Generate QR Code</h5>
+                    <p class="card-text">Create QR codes for attendance marking.</p>
+                    <a href="/generate_qr" class="btn btn-primary">Generate QR</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Attendance -->
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">View Attendance</h5>
+                    <p class="card-text">View and manage attendance records.</p>
+                    <a href="/manage_attendance" class="btn btn-primary">Manage Attendance</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Attendance CSV -->
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Download Attendance CSV</h5>
+                    <p class="card-text">Download filtered attendance records in CSV format.</p>
+                    <a href="/show_attendance_csv_settings" class="btn btn-primary">Download CSV</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Logout -->
+        <div class="col-md-12 text-center">
+            <a href="/logout" class="btn btn-danger btn-lg">Logout</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

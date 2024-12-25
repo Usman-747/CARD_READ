@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Welcome to the Attendance App</h1>
+    <p class="text-center lead">Manage attendance efficiently using QR codes.</p>
+
+    {% if session.get('user_id') %}
+        <div class="mt-4">
+            {% if session.get('is_admin') %}
+                <!-- Admin Dashboard -->
+                <h2 class="text-center">Admin Dashboard</h2>
+                <div class="text-center mt-3">
+                    <a href="/admins" class="btn btn-primary">Manage Users</a>
+                    <a href="/generate_qr" class="btn btn-success">Generate QR Code</a>
+                </div>
+            {% else %}
+                <!-- Student Dashboard -->
+                <h2 class="text-center">Student Dashboard</h2>
+                <div class="text-center mt-3">
+                    <button id="start_scan" class="btn btn-primary">Start Scanning</button>
+
+                    <!-- Camera Video Element (hidden initially) -->
+                    <video id="camera_stream" width="400" height="300" style="display: none;"></video>
+
+                    <!-- Form to submit QR code data -->
+                    <form action="/scan_qr" method="POST" id="scan_qr_form" enctype="multipart/form-data">
+                        <input type="hidden" id="qr_data" name="qr_data">
+                        <button type="submit" class="btn btn-primary" id="submit_qr" style="display: none;">Submit</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <!-- Non-logged-in users -->
+        <div class="text-center mt-4">
+            <a href="/login" class="btn btn-success btn-lg me-2">Login</a>
+            <a href="/register" class="btn btn-outline-success btn-lg">Register</a>
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script>
+    document.getElementById("start_scan").addEventListener("click", function() {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                const videoElement = document.getElementById("camera_stream");
+                videoElement.style.display = "block";
+                videoElement.srcObject = stream;
+                videoElement.play();
+
+                const codeReader = new ZXing.BrowserQRCodeReader();
+                codeReader.decodeFromVideoDevice(null, videoElement, (result, err) => {
+                    if (result) {
+                        document.getElementById("qr_data").value = result.text;
+                        document.getElementById("submit_qr").style.display = "block";
+                        codeReader.reset();
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    if (err && !(err instanceof ZXing.NotFoundException)) {
+                        console.error(err);
+                    }
+                });
+            })
+            .catch(function(err) {
+                alert("Error: " + err.message);
+            });
+    });
+</script>
+{% endblock %}

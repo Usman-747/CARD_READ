@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}Manage Attendance{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Manage Attendance</h1>
+    <form action="/manage_attendance" method="POST" class="mb-4">
+        <div class="form-group">
+            <label for="subject">Select Subject</label>
+            <select name="subject" id="subject" class="form-control" required>
+                <option value="">-- Select Subject --</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.subject }}" {% if subject.subject == selected_subject %}selected{% endif %}>{{ subject.subject }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Show Attendance</button>
+    </form>
+
+    {% if attendance_data %}
+    <h2 class="text-center mt-5">Attendance Records for "{{ selected_subject }}"</h2>
+    <table class="table table-bordered mt-4">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Date</th>
+                <th>Slot</th>
+                <th>Marked On</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in attendance_data %}
+                <tr>
+                    <td>{{ record.username }}</td>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.slot }}</td>
+                    <td>{{ record.marked_on }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">No attendance records found for this subject.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}
