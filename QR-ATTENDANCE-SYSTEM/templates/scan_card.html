@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block title %}Card Scanner{% endblock %}
+{% block content %}
+<div class="scanner-container">
+    <h2>Scan Your Card</h2>
+    <div id="reader" style="width: 350px; margin: auto;"></div>
+    <form id="manual-entry-form" style="margin-top: 20px;">
+        <label for="cardNumber">Or enter card number manually:</label>
+        <input type="text" id="cardNumber" name="cardNumber" required>
+        <button type="submit">Submit</button>
+    </form>
+    <div id="scan-result" style="margin-top: 20px;"></div>
+</div>
+
+<!-- html5-qrcode library -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+    function onScanSuccess(decodedText, decodedResult) {
+        document.getElementById('scan-result').innerHTML = `<strong>Card Scanned:</strong> ${decodedText}`;
+        // Optionally, send the scanned card to the server via AJAX here
+        html5QrcodeScanner.clear();
+    }
+    function onScanFailure(error) {
+        // Optionally handle scan errors
+    }
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", { fps: 10, qrbox: 250 }
+    );
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+    // Manual entry form handler
+    document.getElementById('manual-entry-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const cardNumber = document.getElementById('cardNumber').value;
+        document.getElementById('scan-result').innerHTML = `<strong>Card Entered:</strong> ${cardNumber}`;
+        // Optionally, send the card number to the server via AJAX here
+    });
+</script>
+<style>
+.scanner-container {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+#reader {
+    margin-bottom: 20px;
+}
+</style>
+{% endblock %}
