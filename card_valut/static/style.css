@@ -1,0 +1,72 @@
+body {
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.scanner-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 35px 30px 30px 30px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    text-align: center;
+    transition: box-shadow 0.3s;
+}
+
+.scanner-container:hover {
+    box-shadow: 0 12px 40px rgba(31, 38, 135, 0.22);
+}
+
+h2 {
+    color: #2d3a4b;
+    margin-bottom: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+#reader {
+    margin-bottom: 22px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+}
+
+#scan-result {
+    margin-top: 24px;
+    font-size: 1.1em;
+    color: #1b7e3c;
+    font-weight: 500;
+    min-height: 24px;
+    transition: color 0.2s;
+}
+
+input[type=\"text\"] {
+    padding: 8px 12px;
+    border: 1px solid #bfc9d1;
+    border-radius: 6px;
+    font-size: 1em;
+    margin-right: 8px;
+    outline: none;
+    transition: border 0.2s;
+}
+
+input[type=\"text\"]:focus {
+    border: 1.5px solid #4a90e2;
+}
+
+button[type=\"submit\"] {
+    padding: 8px 18px;
+    background: linear-gradient(90deg, #4a90e2 0%, #357ab7 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+button[type=\"submit\"]:hover {
+    background: linear-gradient(90deg, #357ab7 0%, #4a90e2 100%);
+    transform: translateY(-2px) scale(1.04);
+}

@@ -1,53 +1,213 @@
-{% extends "layout.html" %}
-{% block title %}Card Scanner{% endblock %}
-{% block content %}
-<div class="scanner-container">
-    <h2>Scan Your Card</h2>
-    <div id="reader" style="width: 350px; margin: auto;"></div>
-    <form id="manual-entry-form" style="margin-top: 20px;">
-        <label for="cardNumber">Or enter card number manually:</label>
-        <input type="text" id="cardNumber" name="cardNumber" required>
-        <button type="submit">Submit</button>
-    </form>
-    <div id="scan-result" style="margin-top: 20px;"></div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Business Card Reader</title>
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}"> -->
+    <style>
+        .scanner-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #reader {
+            margin-bottom: 20px;
+        }
+        .card-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: left;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .card p {
+            margin: 5px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        #upload-section {
+            margin: 20px 0;
+        }
+        #results {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanner-container">
+        <h2>Business Card Scanner</h2>
+        
+        <!-- Image Upload Section -->
+        <div id="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" name="image" accept="image/*" required>
+                <button type="submit">Scan Card</button>
+            </form>
+        </div>
 
-<!-- html5-qrcode library -->
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<script>
-    function onScanSuccess(decodedText, decodedResult) {
-        document.getElementById('scan-result').innerHTML = `<strong>Card Scanned:</strong> ${decodedText}`;
-        // Optionally, send the scanned card to the server via AJAX here
-        html5QrcodeScanner.clear();
-    }
-    function onScanFailure(error) {
-        // Optionally handle scan errors
-    }
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", { fps: 10, qrbox: 250 }
-    );
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
-    // Manual entry form handler
-    document.getElementById('manual-entry-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const cardNumber = document.getElementById('cardNumber').value;
-        document.getElementById('scan-result').innerHTML = `<strong>Card Entered:</strong> ${cardNumber}`;
-        // Optionally, send the card number to the server via AJAX here
-    });
-</script>
-<style>
-.scanner-container {
-    max-width: 400px;
-    margin: 40px auto;
-    padding: 30px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    text-align: center;
-}
-#reader {
-    margin-bottom: 20px;
-}
-</style>
-{% endblock %}
+        <!-- OCR Results -->
+        <div id="results">
+            <h3>Extracted Information</h3>
+            <div id="cardData"></div>
+            <button id="saveBtn" style="display:none; margin-top:10px;">Save to Database</button>
+            <div id="saveStatus"></div>
+        </div>
+
+        <!-- Stored Cards -->
+        <h2>Stored Business Cards</h2>
+        <div class="card-display" id="cardList">
+            {% for card in cards %}
+            <div class="card" data-id="{{ card.id }}">
+                <h3>{{ card.name }}</h3>
+                <p><strong>Company:</strong> {{ card.company }}</p>
+                <p><strong>Title:</strong> {{ card.job_title }}</p>
+                <p><strong>Email:</strong> {{ card.email }}</p>
+                <p><strong>Phone:</strong> {{ card.phone_number }}</p>
+                <p><strong>Website:</strong> {{ card.website }}</p>
+                <p><strong>Address:</strong> {{ card.address }}</p>
+                <p><strong>Card Number:</strong> {{ card.card_number }}</p>
+                <button onclick="editCard({{ card.id }})">Edit</button>
+                <button class="delete-btn" onclick="deleteCard({{ card.id }})">Delete</button>
+            </div>
+            {% endfor %} 
+        </div>
+    </div>
+
+    <script>
+        // Handle image upload and OCR processing
+
+        let lastExtractedData = null;
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('image', e.target.image.files[0]);
+
+            fetch('/ocr', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+                const cardDataDiv = document.getElementById('cardData');
+                const saveBtn = document.getElementById('saveBtn');
+                const saveStatus = document.getElementById('saveStatus');
+                if (data.error) {
+                    cardDataDiv.innerHTML = '<span style="color:red;">Error: ' + data.error + '</span>';
+                    saveBtn.style.display = 'none';
+                } else {
+                    lastExtractedData = data;
+                    cardDataDiv.innerHTML = `
+                        <p><strong>Name:</strong> ${data.name || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
+                        <p><strong>Phone:</strong> ${data.phone_number || 'N/A'}</p>
+                        <p><strong>Company:</strong> ${data.company || 'N/A'}</p>
+                        <p><strong>Job Title:</strong> ${data.job_title || 'N/A'}</p>
+                        <p><strong>Website:</strong> ${data.website || 'N/A'}</p>
+                        <p><strong>Address:</strong> ${data.address || 'N/A'}</p>
+                        <p><strong>Card Number:</strong> ${data.card_number || 'N/A'}</p>
+                    `;
+                    saveBtn.style.display = 'inline-block';
+                    saveStatus.innerHTML = '';
+                }
+                resultsDiv.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const cardDataDiv = document.getElementById('cardData');
+                cardDataDiv.innerHTML = '<span style="color:red;">An error occurred while processing the image.</span>';
+                document.getElementById('results').style.display = 'block';
+            });
+        });
+
+        // Save to Database button handler
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            if (!lastExtractedData) return;
+            fetch('/save_card', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(lastExtractedData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('saveStatus').innerHTML = data.message ? `<span style='color:green;'>${data.message}</span>` : `<span style='color:red;'>${data.error}</span>`;
+                if (data.success) setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch(error => {
+                document.getElementById('saveStatus').innerHTML = `<span style='color:red;'>An error occurred while saving.</span>`;
+            });
+        });
+        
+        // Delete card function
+        function deleteCard(id) {
+            if (confirm('Are you sure you want to delete this card?')) {
+                fetch(`/cards/${id}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    window.location.reload();
+                });
+            }
+        }
+        
+        // Edit card function (basic implementation)
+        function editCard(id) {
+            fetch(`/cards/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                const newName = prompt("Enter new name:", data.name);
+                if (newName !== null) {
+                    fetch(`/cards/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: newName })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        window.location.reload();
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
