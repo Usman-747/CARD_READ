@@ -1,4 +1,13 @@
+from flask import Flask, render_template, request, jsonify, g
+import pytesseract
+from PIL import Image
+import re
+import os
+import sqlite3
 
+app = Flask(__name__)
+
+@app.route('/save_card', methods=['POST'])
 def save_card():
     data = request.get_json()
     required_fields = ['name', 'company', 'job_title', 'card_number', 'email', 'phone_number', 'website', 'address']
@@ -42,16 +51,6 @@ def save_card():
     except Exception as e:
         print('Save card error:', e)
         return jsonify({'success': False, 'error': str(e)}), 500
-from flask import Flask, render_template, request, jsonify, g
-import pytesseract
-from PIL import Image
-import re
-import os
-import sqlite3
-
-app = Flask(__name__)
-
-@app.route('/save_card', methods=['POST'])
 
 # Database configuration using sqlite3's own methods
 def get_db():
@@ -74,10 +73,72 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Home route renders the only HTML file
+
+
+# Home route renders the only HTML file and passes stored cards
 @app.route('/')
 def index():
-    return render_template('index.html')
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT id, name, company, job_title, card_number, email, phone_number, address, website, raw_text FROM business_cards')
+    cards = cursor.fetchall()
+    return render_template('index.html', cards=cards)
+
+
+# API: Get all cards (JSON for AJAX)
+@app.route('/cards', methods=['GET'])
+def get_cards():
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT id, name, company, job_title, card_number, email, phone_number, address, website, raw_text FROM business_cards')
+    cards = cursor.fetchall()
+    card_list = [
+        {
+            'id': c[0], 'name': c[1], 'company': c[2], 'job_title': c[3], 'card_number': c[4],
+            'email': c[5], 'phone_number': c[6], 'address': c[7], 'website': c[8], 'raw_text': c[9]
+        } for c in cards
+    ]
+    return jsonify(card_list)
+
+# API: Get a single card
+@app.route('/cards/<int:card_id>', methods=['GET'])
+def get_card(card_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT id, name, company, job_title, card_number, email, phone_number, address, website, raw_text FROM business_cards WHERE id = ?', (card_id,))
+    c = cursor.fetchone()
+    if not c:
+        return jsonify({'error': 'Card not found'}), 404
+    card = {
+        'id': c[0], 'name': c[1], 'company': c[2], 'job_title': c[3], 'card_number': c[4],
+        'email': c[5], 'phone_number': c[6], 'address': c[7], 'website': c[8], 'raw_text': c[9]
+    }
+    return jsonify(card)
+
+# API: Update a card
+@app.route('/cards/<int:card_id>', methods=['PUT'])
+def update_card(card_id):
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('''
+        UPDATE business_cards SET name=?, company=?, job_title=?, card_number=?, email=?, phone_number=?, address=?, website=?
+        WHERE id=?
+    ''', (
+        data.get('name'), data.get('company'), data.get('job_title'), data.get('card_number'),
+        data.get('email'), data.get('phone_number'), data.get('address'), data.get('website'), card_id
+    ))
+    db.commit()
+    return jsonify({'success': True, 'message': 'Card updated.'})
+
+# API: Delete a card
+@app.route('/cards/<int:card_id>', methods=['DELETE'])
+def delete_card(card_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('DELETE FROM business_cards WHERE id=?', (card_id,))
+    db.commit()
+    return jsonify({'success': True, 'message': 'Card deleted.'})
 
 # OCR endpoint for image uploads
 @app.route('/ocr', methods=['POST'])

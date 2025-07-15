@@ -6,7 +6,7 @@
     <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}"> -->
     <style>
         .scanner-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 50px auto;
             padding: 30px;
             background: #fff;
@@ -82,30 +82,50 @@
 
 
         <!-- OCR Results -->
-        <div id="results">
+        <div id="results" style="display:none;">
             <h3>Extracted Information</h3>
             <div id="cardData"></div>
             <button id="saveBtn" style="display:none; margin-top:10px;">Save to Database</button>
             <div id="saveStatus"></div>
         </div>
 
-        <!-- Stored Cards -->
-        <h2>Stored Business Cards</h2>
-        <div class="card-display" id="cardList">
-            {% for card in cards %}
-            <div class="card" data-id="{{ card.id }}">
-                <h3>{{ card.name }}</h3>
-                <p><strong>Company:</strong> {{ card.company }}</p>
-                <p><strong>Title:</strong> {{ card.job_title }}</p>
-                <p><strong>Email:</strong> {{ card.email }}</p>
-                <p><strong>Phone:</strong> {{ card.phone_number }}</p>
-                <p><strong>Website:</strong> {{ card.website }}</p>
-                <p><strong>Address:</strong> {{ card.address }}</p>
-                <p><strong>Card Number:</strong> {{ card.card_number }}</p>
-                <button onclick="editCard({{ card.id }})">Edit</button>
-                <button class="delete-btn" onclick="deleteCard({{ card.id }})">Delete</button>
+        <!-- Stored Cards Table -->
+        <div id="storedCardsSection" style="margin-top:40px; width: 100%;">
+            <h2>Stored Business Cards</h2>
+            {% if cards and cards|length > 0 %}
+            <div style="overflow-x:auto;">
+                <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Company</th>
+                            <th>Job Title</th>
+                            <th>Card Number</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Website</th>
+                            <th>Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for card in cards %}
+                        <tr>
+                            <td>{{ card[1] }}</td>
+                            <td>{{ card[2] }}</td>
+                            <td>{{ card[3] }}</td>
+                            <td>{{ card[4] }}</td>
+                            <td>{{ card[5] }}</td>
+                            <td>{{ card[6] }}</td>
+                            <td>{{ card[8] }}</td>
+                            <td>{{ card[7] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            {% endfor %} 
+            {% else %}
+            <p>No cards stored yet.</p>
+            {% endif %}
         </div>
     </div>
 
@@ -147,12 +167,15 @@
                     saveStatus.innerHTML = '';
                 }
                 resultsDiv.style.display = 'block';
+                // Hide stored cards section while scanning
+                document.getElementById('storedCardsSection').style.display = 'none';
             })
             .catch(error => {
                 console.error('Error:', error);
                 const cardDataDiv = document.getElementById('cardData');
                 cardDataDiv.innerHTML = '<span style="color:red;">An error occurred while processing the image.</span>';
                 document.getElementById('results').style.display = 'block';
+                document.getElementById('storedCardsSection').style.display = 'none';
             });
         });
 
@@ -173,6 +196,7 @@
                 document.getElementById('saveStatus').innerHTML = `<span style='color:red;'>An error occurred while saving.</span>`;
             });
         });
+
         
         // Delete card function
         function deleteCard(id) {
