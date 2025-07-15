@@ -105,8 +105,9 @@
                             <th>Phone</th>
                             <th>Website</th>
                             <th>Address</th>
+                            <th>Actions</th>
                         </tr>
-                    </thead>
+       
                     <tbody>
                         {% for card in cards %}
                         <tr>
@@ -118,6 +119,10 @@
                             <td>{{ card[6] }}</td>
                             <td>{{ card[8] }}</td>
                             <td>{{ card[7] }}</td>
+            <td>
+                <button onclick="editCard({{ card[0] }})">Edit</button>
+                <button class="delete-btn" onclick="deleteCard({{ card[0] }})">Delete</button>
+            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -212,25 +217,45 @@
         
         // Edit card function (basic implementation)
         function editCard(id) {
-            fetch(`/cards/${id}`)
+    fetch(`/cards/${id}`)
+    .then(response => response.json())
+    .then(data => {
+        const newName = prompt("Edit Name:", data.name);
+        const newCompany = prompt("Edit Company:", data.company);
+        const newJobTitle = prompt("Edit Job Title:", data.job_title);
+        const newCardNumber = prompt("Edit Card Number:", data.card_number);
+        const newEmail = prompt("Edit Email:", data.email);
+        const newPhone = prompt("Edit Phone:", data.phone_number);
+        const newWebsite = prompt("Edit Website:", data.website);
+        const newAddress = prompt("Edit Address:", data.address);
+        if (
+            newName !== null && newCompany !== null && newJobTitle !== null &&
+            newCardNumber !== null && newEmail !== null && newPhone !== null &&
+            newWebsite !== null && newAddress !== null
+        ) {
+            fetch(`/cards/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: newName,
+                    company: newCompany,
+                    job_title: newJobTitle,
+                    card_number: newCardNumber,
+                    email: newEmail,
+                    phone_number: newPhone,
+                    website: newWebsite,
+                    address: newAddress
+                })
+            })
             .then(response => response.json())
             .then(data => {
-                const newName = prompt("Enter new name:", data.name);
-                if (newName !== null) {
-                    fetch(`/cards/${id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ name: newName })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message);
-                        window.location.reload();
-                    });
-                }
+                alert(data.message);
+                window.location.reload();
             });
+        }
+    });
         }
     </script>
 </body>
