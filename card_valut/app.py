@@ -1,3 +1,5 @@
+import pandas as pd
+from flask import send_file
 from flask import Flask, render_template, request, jsonify, g
 import pytesseract
 from PIL import Image
@@ -83,6 +85,19 @@ def index():
     cursor.execute('SELECT id, name, company, job_title, card_number, email, phone_number, address, website, raw_text FROM business_cards')
     cards = cursor.fetchall()
     return render_template('index.html', cards=cards)
+
+# Route to download all cards as Excel
+@app.route('/download_excel')
+def download_excel():
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT id, name, company, job_title, card_number, email, phone_number, address, website, raw_text FROM business_cards')
+    rows = cursor.fetchall()
+    columns = ['ID', 'Name', 'Company', 'Job Title', 'Card Number', 'Email', 'Phone', 'Address', 'Website', 'Raw Text']
+    df = pd.DataFrame(rows, columns=columns)
+    file_path = 'business_cards_export.xlsx'
+    df.to_excel(file_path, index=False)
+    return send_file(file_path, as_attachment=True)
 
 
 # API: Get all cards (JSON for AJAX)
